@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>fac</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <header>
+        <h1>fac</h1>
+        <p>Familia, amigos y conocidos</p>
+    </header>
+    <main>
+        <section>
+            <h2>Personas</h2>
+            <form id="form-persona">
+                <input type="text" name="nombre" placeholder="Nombre" required>
+                <input type="text" name="primer_apellido" placeholder="Primer apellido" required>
+                <input type="text" name="segundo_apellido" placeholder="Segundo apellido">
+                <input type="text" name="apodo" placeholder="Apodo">
+                <label>Fecha nacimiento <input type="date" name="fecha_nacimiento"></label>
+                <label>Fecha defunción <input type="date" name="fecha_defuncion"></label>
+                <textarea name="notas" placeholder="Notas"></textarea>
+                <button type="submit">Añadir persona</button>
+            </form>
+            <ul id="lista-personas"></ul>
+        </section>
+
+        <section>
+            <h2>Relaciones</h2>
+            <form id="form-relacion">
+                <select name="persona_a_id" required>
+                    <option value="">Persona A</option>
+                </select>
+                <select name="tipo" required>
+                    <option value="">Tipo</option>
+                    <option value="progenitor">Progenitor</option>
+                    <option value="pareja">Pareja</option>
+                    <option value="amigo">Amigo</option>
+                    <option value="conocido">Conocido</option>
+                </select>
+                <select name="persona_b_id" required>
+                    <option value="">Persona B</option>
+                </select>
+                <input type="text" name="comentario" placeholder="Comentario (opcional)">
+                <button type="submit">Añadir relación</button>
+            </form>
+            <ul id="lista-relaciones"></ul>
+        </section>
+    </main>
+
+    <div id="arbol-container" class="arbol-container hidden">
+        <div class="arbol-header">
+            <h2 id="arbol-titulo"></h2>
+            <button onclick="cerrarArbol()">✕ Cerrar</button>
+        </div>
+        <div id="arbol-contenido" class="arbol-grid"></div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

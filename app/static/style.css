@@ -1,0 +1,224 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: system-ui, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+}
+
+header {
+    background: #2c3e50;
+    color: white;
+    padding: 1.5rem 2rem;
+}
+
+header h1 { font-size: 2rem; }
+header p { opacity: 0.7; margin-top: 0.25rem; }
+
+main {
+    max-width: 960px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+section {
+    background: white;
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+h2 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+}
+
+input, select, textarea {
+    padding: 0.5rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    width: 100%;
+}
+
+label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+textarea { resize: vertical; min-height: 60px; }
+
+button[type="submit"] {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 0.6rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-top: 0.2rem;
+}
+
+button[type="submit"]:hover { background: #34495e; }
+
+ul { list-style: none; }
+
+li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.9rem;
+}
+
+li:last-child { border-bottom: none; }
+
+li .info { flex: 1; }
+
+li .comentario {
+    color: #888;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+li button {
+    background: none;
+    border: none;
+    color: #ccc;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 0.25rem;
+    flex-shrink: 0;
+}
+
+li button:hover { color: #e74c3c; }
+
+li .btn-arbol { color: #aaa; }
+li .btn-arbol:hover { color: #2c3e50; }
+
+/* Árbol genealógico */
+
+.arbol-container {
+    max-width: 960px;
+    margin: 0 auto 2rem;
+    padding: 0 1rem;
+}
+
+.arbol-container.hidden { display: none; }
+
+.arbol-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #2c3e50;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px 8px 0 0;
+}
+
+.arbol-header h2 {
+    color: white;
+    margin: 0;
+    font-size: 1rem;
+}
+
+.arbol-header button {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.4);
+    color: white;
+    padding: 0.3rem 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+.arbol-grid {
+    background: white;
+    border-radius: 0 0 8px 8px;
+    padding: 1.5rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.arbol-fila {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.arbol-label {
+    width: 70px;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #999;
+    flex-shrink: 0;
+}
+
+.arbol-grupo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.arbol-vacio {
+    color: #ccc;
+    font-size: 0.9rem;
+}
+
+.arbol-tarjeta {
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
+
+.arbol-tarjeta.protagonista {
+    background: #2c3e50;
+    color: white;
+    border-color: #2c3e50;
+    font-weight: bold;
+}
+
+.arbol-tarjeta small { opacity: 0.7; }
+
+.arbol-sep {
+    color: #e74c3c;
+    font-size: 1.1rem;
+    margin: 0 0.25rem;
+}
+
+.nivel-abuelos .arbol-tarjeta { border-top: 3px solid #95a5a6; }
+.nivel-padres  .arbol-tarjeta { border-top: 3px solid #3498db; }
+.nivel-central .arbol-tarjeta { border-top: 3px solid #2ecc71; }
+.nivel-central .arbol-tarjeta.protagonista { border-top: 3px solid #27ae60; }
+.nivel-hijos   .arbol-tarjeta { border-top: 3px solid #e67e22; }
+
+@media (max-width: 600px) {
+    main { grid-template-columns: 1fr; }
+    .arbol-fila { flex-direction: column; align-items: flex-start; }
+    .arbol-label { width: auto; }
+}

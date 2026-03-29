@@ -1,0 +1,10 @@
+services:
+  fac:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/data
+      - ./app:/app/app
+    environment:
+      - DATABASE_URL=sqlite:////data/fac.db
