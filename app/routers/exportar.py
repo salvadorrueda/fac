@@ -98,3 +98,15 @@ def importar(file: UploadFile = File(...), session: Session = Depends(get_sessio
 
     session.commit()
     return {"personas_creadas": personas_creadas, "relaciones_creadas": relaciones_creadas}
+
+
+@router.delete("/vaciar", status_code=200)
+def vaciar(session: Session = Depends(get_session)):
+    relaciones = session.exec(select(Relacion)).all()
+    for r in relaciones:
+        session.delete(r)
+    personas = session.exec(select(Persona)).all()
+    for p in personas:
+        session.delete(p)
+    session.commit()
+    return {"ok": True}

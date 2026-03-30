@@ -41,6 +41,8 @@ header p { opacity: 0.7; margin-top: 0.25rem; }
 }
 
 .btn-toolbar:hover { background: rgba(255,255,255,0.25); }
+.btn-peligro { border-color: rgba(231,76,60,0.6); }
+.btn-peligro:hover { background: rgba(231,76,60,0.4); }
 
 #msg-importar {
     font-size: 0.85rem;

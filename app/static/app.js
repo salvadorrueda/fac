@@ -181,6 +181,14 @@ function cerrarArbol() {
     document.getElementById('arbol-container').classList.add('hidden');
 }
 
+async function vaciarDB() {
+    if (!confirm('¿Seguro que quieres borrar todos los datos? Esta acción no se puede deshacer.')) return;
+    await fetch('/vaciar', { method: 'DELETE' });
+    await loadPersonas();
+    await loadRelaciones();
+    cerrarArbol();
+}
+
 document.getElementById('input-importar').addEventListener('change', async (e) => {
     const file = e.target.files[0];
     if (!file) return;
