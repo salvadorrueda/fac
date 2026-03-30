@@ -167,13 +167,16 @@ function buildFilaCentral(arbol) {
 
 function tarjetaPersona(p, esProtagonista) {
     const div = document.createElement('div');
-    div.className = `arbol-tarjeta${esProtagonista ? ' protagonista' : ''}`;
+    div.className = `arbol-tarjeta${esProtagonista ? ' protagonista' : ' clickable'}`;
     div.innerHTML = `
         <strong>${p.nombre} ${p.primer_apellido}</strong>
         ${p.segundo_apellido ? `<br>${p.segundo_apellido}` : ''}
         ${p.apodo ? `<br><em>(${p.apodo})</em>` : ''}
         ${p.fecha_nacimiento ? `<br><small>${p.fecha_nacimiento}${p.fecha_defuncion ? ' – ' + p.fecha_defuncion : ''}</small>` : ''}
     `;
+    if (!esProtagonista) {
+        div.onclick = () => verArbol(p.id);
+    }
     return div;
 }
 

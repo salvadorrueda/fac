@@ -25,6 +25,14 @@
         </div>
     </header>
 
+    <div id="arbol-container" class="arbol-container hidden">
+        <div class="arbol-header">
+            <h2 id="arbol-titulo"></h2>
+            <button onclick="cerrarArbol()">✕ Cerrar</button>
+        </div>
+        <div id="arbol-contenido" class="arbol-grid"></div>
+    </div>
+
     <main>
         <section>
             <h2>Personas</h2>
@@ -69,14 +77,6 @@
             <ul id="lista-relaciones"></ul>
         </section>
     </main>
-
-    <div id="arbol-container" class="arbol-container hidden">
-        <div class="arbol-header">
-            <h2 id="arbol-titulo"></h2>
-            <button onclick="cerrarArbol()">✕ Cerrar</button>
-        </div>
-        <div id="arbol-contenido" class="arbol-grid"></div>
-    </div>
 
     <script src="/static/app.js"></script>
 </body>
