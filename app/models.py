@@ -18,6 +18,7 @@ class Persona(SQLModel, table=True):
     apodo: Optional[str] = None
     fecha_nacimiento: Optional[str] = None
     fecha_defuncion: Optional[str] = None
+    genero: Optional[str] = None
     notas: Optional[str] = None
 
 

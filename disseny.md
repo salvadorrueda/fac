@@ -137,3 +137,192 @@ Si guardas `(Juan → Padre → María)`, puedes deducir automáticamente `(Mar�
 1. **¿Las relaciones tienen fecha?** Por ejemplo, *desde cuándo* son amigos, o cuándo se casaron.
 2. **¿El catálogo de TipoRelacion es cerrado** (predefinido) o el usuario puede añadir tipos nuevos?
 3. **¿Una relación puede tener notas propias?** Por ejemplo, "nos conocimos en el trabajo".
+
+
+## Diseño final (por ahora)
+
+---
+
+### Entidad: Persona
+
+| Atributo | |
+|---|---|
+| id | clave primaria |
+| nombre | |
+| primer_apellido | |
+| segundo_apellido | nullable |
+| apodo | nullable |
+| fecha_nacimiento | nullable |
+| fecha_defuncion | nullable |
+| notas | nullable |
+
+---
+
+### Entidad: Relacion
+
+| Atributo | |
+|---|---|
+| id | clave primaria |
+| persona_a_id | FK → Persona |
+| persona_b_id | FK → Persona |
+| tipo | enum: `progenitor`, `pareja`, `amigo`, `conocido` |
+| comentario | texto libre, nullable |
+
+El campo `comentario` absorbe lo que antes llamábamos fecha, período, contexto... sin complicar el esquema. Por ejemplo: *"amigos desde el instituto, 1995-2003"* o *"pareja hasta 2010"*.
+
+---
+
+### Una observación sobre `progenitor`
+
+Es el único tipo **asimétrico**: la dirección importa.
+`persona_a` es progenitor de `persona_b`.
+
+Para el resto (*pareja*, *amigo*, *conocido*) la dirección no importa: son simétricas.
+
+Esto hay que tenerlo en cuenta al consultar la base de datos, pero no cambia el esquema.
+
+---
+
+¿Te parece bien así para empezar a codificar?
+
+## Opciones para SQLite con FastAPI
+
+---
+
+### Cómo acceder a SQLite desde Python
+
+**Opción A — SQLModel** *(recomendada)*
+Creada por el mismo autor que FastAPI. Combina SQLAlchemy + Pydantic. Los modelos de base de datos y los modelos de la API son la misma clase. Muy poco código repetitivo.
+
+**Opción B — SQLAlchemy**
+El ORM más maduro y popular de Python. Más verboso que SQLModel pero con más documentación y más control. SQLModel se apoya en él por debajo.
+
+**Opción C — sqlite3 puro**
+Módulo de la librería estándar de Python. Sin ORM, SQL directo. Más trabajo manual pero sin dependencias externas.
+
+Para este proyecto, **SQLModel** es la opción más natural junto a FastAPI.
+
+---
+
+### Docker con SQLite
+
+Sí, funciona perfectamente. El truco es que SQLite es un **fichero**, no un servidor, así que hay que usar un **volumen Docker** para que los datos persistan cuando el contenedor se reinicia o se actualiza.
+
+```
+[Contenedor FastAPI]
+    └── /app/data/fac.db  ←──── montado desde el host
+                                 ~/fac-data/fac.db
+```
+
+Con Docker Compose sería un único servicio, muy sencillo:
+
+```
+fac/
+├── docker-compose.yml
+├── Dockerfile
+├── app/
+│   └── (código FastAPI)
+└── data/          ← volumen SQLite (en el host)
+    └── fac.db
+```
+
+No necesitas un contenedor separado para la base de datos (eso sería necesario con PostgreSQL o MySQL, no con SQLite).
+
+---
+
+### ¿Cuándo dejar SQLite y pasar a PostgreSQL?
+
+SQLite tiene una limitación importante: **escrituras concurrentes**. Para un uso personal o de pocos usuarios simultáneos es más que suficiente. Si en el futuro el proyecto crece o necesita varios usuarios escribiendo a la vez, migrar a PostgreSQL con SQLAlchemy/SQLModel es sencillo porque solo cambia la cadena de conexión.
+
+---
+
+¿Te parece bien esta dirección? Si confirmas, puedo proponer la estructura de ficheros del proyecto antes de empezar a codificar.
+
+## Estructura de ficheros propuesta
+
+```
+fac/
+├── docker-compose.yml
+├── Dockerfile
+├── .env                        # variables de entorno (puerto, ruta DB, etc.)
+├── .gitignore
+├── requirements.txt
+│
+├── data/                       # volumen SQLite (ignorado por git)
+│   └── fac.db
+│
+└── app/
+    ├── main.py                 # entrada: crea la app FastAPI
+    ├── database.py             # conexión y sesión SQLite/SQLModel
+    ├── models.py               # tablas: Persona, Relacion
+    ├── schemas.py              # modelos de entrada/salida de la API
+    │
+    ├── routers/
+    │   ├── personas.py         # GET/POST/PUT/DELETE /personas
+    │   └── relaciones.py       # GET/POST/PUT/DELETE /relaciones
+    │
+    └── static/
+        ├── index.html          # interfaz principal
+        ├── style.css
+        └── app.js              # llamadas a la API (fetch)
+```
+
+---
+
+### Por qué esta estructura
+
+- `models.py` define las tablas con SQLModel
+- `schemas.py` define qué datos entran y salen por la API (pueden diferir del modelo de BD)
+- `routers/` separa los endpoints por entidad — fácil de ampliar
+- `static/` sirve la interfaz HTML directamente desde FastAPI, sin servidor web aparte
+- `data/` fuera de `app/` para que el volumen Docker no interfiera con el código
+
+---
+
+### Flujo de una petición
+
+```
+Navegador → app.js (fetch) → FastAPI router → SQLModel → fac.db
+```
+
+---
+
+¿Algún ajuste antes de empezar a codificar?
+
+Listo. Estructura completa creada. Para arrancarlo:
+
+**Con Docker:**
+```bash
+docker compose up --build
+```
+
+**Sin Docker (local):**
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
+
+Luego abre `http://localhost:8000`.
+
+La documentación automática de la API está en `http://localhost:8000/docs`.
+Listo. Resumen de los cambios:
+
+**Backend** (`app/routers/personas.py`):
+- Nuevo endpoint `GET /personas/{id}/arbol` que devuelve abuelos, padres, hermanos, parejas e hijos deducidos a partir de las relaciones `progenitor` y `pareja`.
+
+**Frontend**:
+- Botón 🌳 junto a cada persona en la lista
+- Al pulsarlo, aparece el árbol debajo con 4 filas por generación:
+
+```
+Abuelos   [gris]  [gris]  [gris]  [gris]
+Padres    [azul]  [azul]
+Familia   [verde] [★PERSONA★] ♥ [pareja]
+Hijos     [naranja] [naranja]
+```
+
+```bash
+docker compose up --build
+```

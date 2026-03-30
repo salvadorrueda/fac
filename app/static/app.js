@@ -181,5 +181,29 @@ function cerrarArbol() {
     document.getElementById('arbol-container').classList.add('hidden');
 }
 
+document.getElementById('input-importar').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const form = new FormData();
+    form.append('file', file);
+
+    const msg = document.getElementById('msg-importar');
+    msg.textContent = 'Importando...';
+
+    const res = await fetch('/importar', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (res.ok) {
+        msg.textContent = `✓ ${data.personas_creadas} personas y ${data.relaciones_creadas} relaciones importadas`;
+        await loadPersonas();
+        await loadRelaciones();
+    } else {
+        msg.textContent = `Error: ${data.detail}`;
+    }
+    e.target.value = '';
+    setTimeout(() => { msg.textContent = ''; }, 5000);
+});
+
 loadPersonas();
 loadRelaciones();

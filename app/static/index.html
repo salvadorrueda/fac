@@ -8,9 +8,22 @@
 </head>
 <body>
     <header>
-        <h1>fac</h1>
-        <p>Familia, amigos y conocidos</p>
+        <div class="header-top">
+            <div>
+                <h1>fac</h1>
+                <p>Familia, amigos y conocidos</p>
+            </div>
+            <div class="toolbar">
+                <a href="/exportar" class="btn-toolbar">↓ Exportar .xlsx</a>
+                <label class="btn-toolbar">
+                    ↑ Importar .xlsx
+                    <input type="file" id="input-importar" accept=".xlsx" style="display:none">
+                </label>
+                <span id="msg-importar"></span>
+            </div>
+        </div>
     </header>
+
     <main>
         <section>
             <h2>Personas</h2>
@@ -21,6 +34,12 @@
                 <input type="text" name="apodo" placeholder="Apodo">
                 <label>Fecha nacimiento <input type="date" name="fecha_nacimiento"></label>
                 <label>Fecha defunción <input type="date" name="fecha_defuncion"></label>
+                <select name="genero">
+                    <option value="">Género</option>
+                    <option value="masculino">Masculino</option>
+                    <option value="femenino">Femenino</option>
+                    <option value="otro">Otro</option>
+                </select>
                 <textarea name="notas" placeholder="Notas"></textarea>
                 <button type="submit">Añadir persona</button>
             </form>
