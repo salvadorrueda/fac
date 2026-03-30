@@ -148,6 +148,59 @@ li button:hover { color: #e74c3c; }
 li .btn-arbol { color: #aaa; }
 li .btn-arbol:hover { color: #2c3e50; }
 
+/* Lenguaje natural */
+
+.nl-container {
+    max-width: 960px;
+    margin: 2rem auto 0;
+    padding: 0 1rem;
+}
+
+#form-nl {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 0;
+}
+
+#input-nl {
+    resize: vertical;
+    font-size: 0.95rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 0.6rem;
+    font-family: inherit;
+    width: 100%;
+}
+
+.nl-footer {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nl-footer button {
+    background: #2c3e50;
+    color: white;
+    border: none;
+    padding: 0.5rem 1.2rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.nl-footer button:hover { background: #34495e; }
+.nl-footer button:disabled { background: #95a5a6; cursor: default; }
+
+#msg-nl {
+    font-size: 0.85rem;
+    color: #555;
+}
+
 /* Árbol genealógico */
 
 .arbol-container {

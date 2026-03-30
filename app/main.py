@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.database import create_db
-from app.routers import personas, relaciones, exportar
+from app.routers import personas, relaciones, exportar, interpretar
 
 
 @asynccontextmanager
@@ -17,6 +17,7 @@ app = FastAPI(title="fac", description="Familia, amigos y conocidos", lifespan=l
 app.include_router(personas.router)
 app.include_router(relaciones.router)
 app.include_router(exportar.router)
+app.include_router(interpretar.router)
 
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 

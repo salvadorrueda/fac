@@ -4,3 +4,4 @@ sqlmodel
 python-dotenv
 openpyxl
 python-multipart
+httpx

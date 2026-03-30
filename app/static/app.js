@@ -1,3 +1,39 @@
+document.getElementById('form-nl').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const texto = document.getElementById('input-nl').value.trim();
+    if (!texto) return;
+
+    const btn = document.getElementById('btn-nl');
+    const msg = document.getElementById('msg-nl');
+    btn.disabled = true;
+    btn.textContent = 'Procesando...';
+    msg.textContent = '';
+
+    const res = await fetch('/interpretar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ texto }),
+    });
+    const data = await res.json();
+
+    btn.disabled = false;
+    btn.textContent = 'Interpretar';
+
+    if (res.ok) {
+        const partes = [];
+        if (data.personas_creadas.length)
+            partes.push(`Personas: ${data.personas_creadas.join(', ')}`);
+        if (data.relaciones_creadas)
+            partes.push(`${data.relaciones_creadas} relación(es)`);
+        msg.textContent = partes.length ? `✓ ${partes.join(' · ')}` : '✓ Sin cambios';
+        document.getElementById('input-nl').value = '';
+        await loadPersonas();
+        await loadRelaciones();
+    } else {
+        msg.textContent = `Error: ${data.detail}`;
+    }
+});
+
 async function loadPersonas() {
     const res = await fetch('/personas/');
     const personas = await res.json();
