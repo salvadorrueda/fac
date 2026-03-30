@@ -326,3 +326,91 @@ Hijos     [naranja] [naranja]
 ```bash
 docker compose up --build
 ```
+## Evaluar opciones para lenguaje natural
+
+---
+
+### Aclaración sobre MCP
+
+MCP no es la herramienta adecuada aquí. MCP es un protocolo para conectar **Claude Desktop o Claude Code** a fuentes de datos externas (tu BD, ficheros, APIs). Serviría si quisieras hablarle a Claude Desktop y que él consultase tu app, pero no para poner una caja de texto dentro de la web.
+
+Para lo que describes, las opciones reales son:
+
+---
+
+### Opción A — Claude API con Tool Use *(recomendada)*
+
+El backend recibe el texto, lo envía a la API de Claude junto con definiciones de herramientas (`buscar_persona`, `crear_persona`, `crear_relacion`). Claude decide qué herramientas llamar y con qué parámetros. El backend ejecuta esas llamadas contra SQLite.
+
+```
+[Input usuario] → FastAPI → Claude API → tool calls → SQLite
+```
+
+**Pros:** Entiende cualquier frase, cualquier idioma, ambigüedades, nombres compuestos  
+**Contras:** Requiere API key de Anthropic, coste por llamada (~fracción de céntimo), latencia ~1-2s  
+
+---
+
+### Opción B — Regex / reglas
+
+Defines patrones fijos:
+```
+"X es padre de Y" → progenitor(X, Y)
+"X y Y son amigos" → amigo(X, Y)
+"X es pareja de Y" → pareja(X, Y)
+```
+
+**Pros:** Gratis, instantáneo, sin dependencias externas  
+**Contras:** Cualquier variación rompe el parsing. "El padre de Juan es Ernesto" ya no funciona. Frágil.
+
+---
+
+### Opción C — LLM local (Ollama)
+
+Añadir un contenedor Ollama con Llama 3 o Mistral. Sin coste por llamada.
+
+**Pros:** Gratis, privado, sin API key  
+**Contras:** Necesita bastante RAM/CPU, calidad inferior a Claude, añade complejidad al docker-compose, más lento en CPU
+
+---
+
+### Opción D — spaCy (NLP clásico)
+
+Usar spaCy para extraer nombres propios + reglas para detectar el tipo de relación.
+
+**Pros:** Gratis, ligero  
+**Contras:** Los modelos de español son limitados, requiere bastante trabajo para casos reales, resultado similar a regex pero más complejo de implementar
+
+---
+
+### Comparativa
+
+| | Calidad | Coste | Complejidad | Offline |
+|---|---|---|---|---|
+| Claude API | ★★★★★ | ~€0.001/llamada | Baja | No |
+| Regex | ★★ | Gratis | Muy baja | Sí |
+| Ollama | ★★★ | Gratis | Alta | Sí |
+| spaCy | ★★★ | Gratis | Media | Sí |
+
+---
+
+### Mi recomendación
+
+**Claude API con Tool Use** es la opción más sólida y la más rápida de implementar. La integración es directa desde FastAPI, sin infraestructura adicional. Si tienes ya una API key de Anthropic, el coste es despreciable para uso personal.
+
+¿Quieres que lo implemente con esa opción?
+
+Listo. Para ponerlo en marcha:
+
+```bash
+docker compose up --build
+```
+
+Después, la primera vez, hay que descargar el modelo (unos 2 GB):
+```bash
+docker compose exec ollama ollama pull llama3.2
+```
+
+Esto solo se hace una vez — el modelo queda guardado en el volumen `ollama_data`.
+
+**Cómo funciona:** escribes una frase en la caja de texto, el backend la envía a Ollama con un prompt que le pide JSON estructurado, y con la respuesta busca las personas en la BD (o las crea si no existen) y añade las relaciones. La primera llamada puede tardar unos segundos mientras el modelo carga en memoria.
