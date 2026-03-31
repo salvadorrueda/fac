@@ -1,5 +1,6 @@
 import httpx
 import json
+import logging
 import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import SQLModel, Session, select
@@ -9,6 +10,7 @@ from app.database import get_session
 from app.models import Persona, Relacion, TipoRelacion
 
 router = APIRouter(tags=["interpretar"])
+log = logging.getLogger("fac.interpretar")
 
 OLLAMA_URL = os.getenv("OLLAMA_URL", "http://localhost:11434")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
@@ -69,23 +71,35 @@ async def interpretar(body: InterpretarRequest, session: Session = Depends(get_s
     if not texto:
         raise HTTPException(status_code=400, detail="Texto vacío")
 
+    prompt = PROMPT.format(texto=texto)
+    log.info("─── Ollama request ───────────────────────────")
+    log.info("Model : %s", OLLAMA_MODEL)
+    log.info("Prompt:\n%s", prompt)
+
     async with httpx.AsyncClient(timeout=60) as client:
         try:
             res = await client.post(
                 f"{OLLAMA_URL}/api/generate",
                 json={
                     "model": OLLAMA_MODEL,
-                    "prompt": PROMPT.format(texto=texto),
+                    "prompt": prompt,
                     "stream": False,
                     "format": "json",
                 },
             )
         except httpx.ConnectError:
+            log.error("Ollama no está disponible en %s", OLLAMA_URL)
             raise HTTPException(status_code=503, detail="Ollama no está disponible")
 
+    raw_response = res.json().get("response", "")
+    log.info("─── Ollama response ──────────────────────────")
+    log.info("Raw JSON: %s", raw_response)
+
     try:
-        extracted = json.loads(res.json()["response"])
+        extracted = json.loads(raw_response)
+        log.info("Parsed  : %s", json.dumps(extracted, ensure_ascii=False, indent=2))
     except (json.JSONDecodeError, KeyError):
+        log.error("JSON inválido recibido de Ollama: %s", raw_response)
         raise HTTPException(status_code=500, detail="El modelo no devolvió JSON válido")
 
     existentes = session.exec(select(Persona)).all()
@@ -103,7 +117,8 @@ async def interpretar(body: InterpretarRequest, session: Session = Depends(get_s
         match = next(
             (e for e in existentes
              if e.nombre.lower() == nombre.lower()
-             and e.primer_apellido.lower() == primer_ap.lower()),
+             and e.primer_apellido.lower() == primer_ap.lower()
+             and (e.segundo_apellido or "").lower() == (segundo_ap or "").lower()),
             None,
         )
 

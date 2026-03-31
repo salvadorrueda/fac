@@ -414,3 +414,26 @@ docker compose exec ollama ollama pull llama3.2
 Esto solo se hace una vez — el modelo queda guardado en el volumen `ollama_data`.
 
 **Cómo funciona:** escribes una frase en la caja de texto, el backend la envía a Ollama con un prompt que le pide JSON estructurado, y con la respuesta busca las personas en la BD (o las crea si no existen) y añade las relaciones. La primera llamada puede tardar unos segundos mientras el modelo carga en memoria.
+
+
+Ara als logs del contenidor veuràs algo així per cada petició:
+
+```
+2026-03-31 10:23:01 [fac.interpretar] INFO: ─── Ollama request ───────────────────────────
+2026-03-31 10:23:01 [fac.interpretar] INFO: Model : llama3.2
+2026-03-31 10:23:01 [fac.interpretar] INFO: Prompt:
+Eres un asistente que extrae personas y relaciones...
+Texto: "Ernesto Ruiz és pare de Juan Ruiz"
+2026-03-31 10:23:04 [fac.interpretar] INFO: ─── Ollama response ──────────────────────────
+2026-03-31 10:23:04 [fac.interpretar] INFO: Raw JSON: {"personas": [...], "relaciones": [...]}
+2026-03-31 10:23:04 [fac.interpretar] INFO: Parsed  :
+{
+  "personas": [...],
+  "relaciones": [...]
+}
+```
+
+Per veure-ho en temps real:
+```bash
+docker compose logs -f fac
+```
