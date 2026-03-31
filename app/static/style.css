@@ -201,6 +201,51 @@ li .btn-arbol:hover { color: #2c3e50; }
     color: #555;
 }
 
+.nl-preview {
+    border-top: 1px solid #eee;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.nl-preview.hidden { display: none; }
+
+.preview-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.preview-nuevo { color: #27ae60; }
+.preview-existente { color: #95a5a6; }
+
+.preview-acciones {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.preview-acciones button {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 0.45rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.preview-acciones button:hover { background: #219a52; }
+
+.preview-acciones .btn-secundario {
+    background: #ecf0f1;
+    color: #555;
+}
+
+.preview-acciones .btn-secundario:hover { background: #dde1e3; }
+
 /* Árbol genealógico */
 
 .arbol-container {

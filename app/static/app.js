@@ -1,3 +1,5 @@
+let previewActual = null;
+
 document.getElementById('form-nl').addEventListener('submit', async (e) => {
     e.preventDefault();
     const texto = document.getElementById('input-nl').value.trim();
@@ -8,6 +10,7 @@ document.getElementById('form-nl').addEventListener('submit', async (e) => {
     btn.disabled = true;
     btn.textContent = 'Procesando...';
     msg.textContent = '';
+    ocultarPreview();
 
     const res = await fetch('/interpretar', {
         method: 'POST',
@@ -20,19 +23,83 @@ document.getElementById('form-nl').addEventListener('submit', async (e) => {
     btn.textContent = 'Interpretar';
 
     if (res.ok) {
+        previewActual = data;
+        mostrarPreview(data);
+    } else {
+        msg.textContent = `Error: ${data.detail}`;
+    }
+});
+
+function mostrarPreview(preview) {
+    const div = document.getElementById('nl-preview');
+    const mapaIndice = {};
+    preview.personas.forEach(p => { mapaIndice[p.indice] = p; });
+
+    const lineasPersonas = preview.personas.map(p => {
+        const nombre = `${p.nombre} ${p.primer_apellido}${p.segundo_apellido ? ' ' + p.segundo_apellido : ''}`;
+        return p.es_nueva
+            ? `<span class="preview-nuevo">+ ${nombre} <em>(nueva)</em></span>`
+            : `<span class="preview-existente">· ${nombre} <em>(ya existe)</em></span>`;
+    });
+
+    const lineasRelaciones = preview.relaciones.map(r => {
+        const a = mapaIndice[r.persona_a];
+        const b = mapaIndice[r.persona_b];
+        const na = `${a.nombre} ${a.primer_apellido}`;
+        const nb = `${b.nombre} ${b.primer_apellido}`;
+        return `<span class="preview-nuevo">+ ${na} → <strong>${r.tipo}</strong> → ${nb}</span>`;
+    });
+
+    const sinCambios = preview.personas.every(p => !p.es_nueva) && preview.relaciones.length === 0;
+
+    div.innerHTML = `
+        <div class="preview-lista">
+            ${lineasPersonas.join('')}
+            ${lineasRelaciones.join('')}
+            ${sinCambios ? '<span class="preview-existente">Sin cambios — todo ya existe en la base de datos.</span>' : ''}
+        </div>
+        <div class="preview-acciones">
+            ${!sinCambios ? '<button onclick="confirmarPreview()">✓ Confirmar</button>' : ''}
+            <button class="btn-secundario" onclick="cancelarPreview()">✕ Cancelar</button>
+        </div>
+    `;
+    div.classList.remove('hidden');
+}
+
+function ocultarPreview() {
+    document.getElementById('nl-preview').classList.add('hidden');
+    previewActual = null;
+}
+
+function cancelarPreview() {
+    ocultarPreview();
+    document.getElementById('msg-nl').textContent = '';
+}
+
+async function confirmarPreview() {
+    if (!previewActual) return;
+
+    const res = await fetch('/interpretar/confirmar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ preview: previewActual }),
+    });
+    const data = await res.json();
+    ocultarPreview();
+
+    const msg = document.getElementById('msg-nl');
+    if (res.ok) {
         const partes = [];
-        if (data.personas_creadas.length)
-            partes.push(`Personas: ${data.personas_creadas.join(', ')}`);
-        if (data.relaciones_creadas)
-            partes.push(`${data.relaciones_creadas} relación(es)`);
-        msg.textContent = partes.length ? `✓ ${partes.join(' · ')}` : '✓ Sin cambios';
+        if (data.personas_creadas.length) partes.push(`Personas: ${data.personas_creadas.join(', ')}`);
+        if (data.relaciones_creadas) partes.push(`${data.relaciones_creadas} relación(es)`);
+        msg.textContent = `✓ ${partes.join(' · ')}`;
         document.getElementById('input-nl').value = '';
         await loadPersonas();
         await loadRelaciones();
     } else {
         msg.textContent = `Error: ${data.detail}`;
     }
-});
+}
 
 async function loadPersonas() {
     const res = await fetch('/personas/');

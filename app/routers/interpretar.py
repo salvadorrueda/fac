@@ -3,6 +3,7 @@ import json
 import os
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import SQLModel, Session, select
+from typing import Optional
 
 from app.database import get_session
 from app.models import Persona, Relacion, TipoRelacion
@@ -38,7 +39,31 @@ class InterpretarRequest(SQLModel):
     texto: str
 
 
-@router.post("/interpretar")
+class PersonaPreview(SQLModel):
+    indice: int
+    nombre: str
+    primer_apellido: str
+    segundo_apellido: Optional[str] = None
+    es_nueva: bool
+    id: Optional[int] = None   # None si es nueva
+
+
+class RelacionPreview(SQLModel):
+    persona_a: int   # indice en la lista de personas
+    persona_b: int
+    tipo: str
+
+
+class Preview(SQLModel):
+    personas: list[PersonaPreview]
+    relaciones: list[RelacionPreview]
+
+
+class ConfirmarRequest(SQLModel):
+    preview: Preview
+
+
+@router.post("/interpretar", response_model=Preview)
 async def interpretar(body: InterpretarRequest, session: Session = Depends(get_session)):
     texto = body.texto.strip()
     if not texto:
@@ -65,9 +90,7 @@ async def interpretar(body: InterpretarRequest, session: Session = Depends(get_s
 
     existentes = session.exec(select(Persona)).all()
 
-    indice_a_id: dict[int, int] = {}
-    personas_creadas: list[str] = []
-
+    personas_preview: list[PersonaPreview] = []
     for p in extracted.get("personas", []):
         indice = p.get("indice")
         nombre = (p.get("nombre") or "").strip()
@@ -84,38 +107,66 @@ async def interpretar(body: InterpretarRequest, session: Session = Depends(get_s
             None,
         )
 
-        if match:
-            indice_a_id[indice] = match.id
-        else:
-            nueva = Persona(nombre=nombre, primer_apellido=primer_ap, segundo_apellido=segundo_ap)
-            session.add(nueva)
-            session.flush()
-            indice_a_id[indice] = nueva.id
-            personas_creadas.append(f"{nombre} {primer_ap}")
+        personas_preview.append(PersonaPreview(
+            indice=indice,
+            nombre=nombre,
+            primer_apellido=primer_ap,
+            segundo_apellido=segundo_ap,
+            es_nueva=match is None,
+            id=match.id if match else None,
+        ))
 
-    relaciones_creadas = 0
+    relaciones_preview: list[RelacionPreview] = []
+    indices_validos = {p.indice for p in personas_preview}
     for r in extracted.get("relaciones", []):
         a_idx = r.get("persona_a")
         b_idx = r.get("persona_b")
         tipo_str = r.get("tipo", "")
-
-        if a_idx not in indice_a_id or b_idx not in indice_a_id:
+        if a_idx not in indices_validos or b_idx not in indices_validos:
             continue
         try:
-            tipo = TipoRelacion(tipo_str)
+            TipoRelacion(tipo_str)
         except ValueError:
             continue
+        relaciones_preview.append(RelacionPreview(
+            persona_a=a_idx,
+            persona_b=b_idx,
+            tipo=tipo_str,
+        ))
 
+    return Preview(personas=personas_preview, relaciones=relaciones_preview)
+
+
+@router.post("/interpretar/confirmar")
+def confirmar(body: ConfirmarRequest, session: Session = Depends(get_session)):
+    preview = body.preview
+    indice_a_id: dict[int, int] = {}
+    personas_creadas: list[str] = []
+
+    for p in preview.personas:
+        if p.es_nueva:
+            nueva = Persona(
+                nombre=p.nombre,
+                primer_apellido=p.primer_apellido,
+                segundo_apellido=p.segundo_apellido,
+            )
+            session.add(nueva)
+            session.flush()
+            indice_a_id[p.indice] = nueva.id
+            personas_creadas.append(f"{p.nombre} {p.primer_apellido}")
+        else:
+            indice_a_id[p.indice] = p.id
+
+    relaciones_creadas = 0
+    for r in preview.relaciones:
+        if r.persona_a not in indice_a_id or r.persona_b not in indice_a_id:
+            continue
         session.add(Relacion(
-            persona_a_id=indice_a_id[a_idx],
-            persona_b_id=indice_a_id[b_idx],
-            tipo=tipo,
+            persona_a_id=indice_a_id[r.persona_a],
+            persona_b_id=indice_a_id[r.persona_b],
+            tipo=TipoRelacion(r.tipo),
         ))
         relaciones_creadas += 1
 
     session.commit()
-
-    return {
-        "personas_creadas": personas_creadas,
-        "relaciones_creadas": relaciones_creadas,
-    }
+    return {"personas_creadas": personas_creadas, "relaciones_creadas": relaciones_creadas}
